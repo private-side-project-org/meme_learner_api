@@ -17,13 +17,13 @@ type DBModel struct {
 }
 
 // returns single meme and error, if any
-func (m *DBModel) Get(id int)(*User, error){
-	ctx, cancel := context.WithTimeout(context.Background(), 3 * time.Second)
+func (m *DBModel) Get(id int) (*User, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancel()
 
 	query := `SELECT id, name, password from users where id = $1`
 
-	row:=m.DB.QueryRowContext(ctx, query, id)
+	row := m.DB.QueryRowContext(ctx, query, id)
 
 	var user User
 
@@ -32,7 +32,6 @@ func (m *DBModel) Get(id int)(*User, error){
 		&user.Name,
 		&user.Password,
 	)
-
 	if err != nil {
 		fmt.Println(err)
 		return nil, err
@@ -60,13 +59,12 @@ func (m *DBModel) Get(id int)(*User, error){
 						user_id = $1`
 
 	rows, err := m.DB.QueryContext(ctx, query, id)
-	
 	if err != nil {
 		fmt.Print("error", err)
 		return nil, err
 	}
 
-	for rows.Next(){
+	for rows.Next() {
 		var meme Meme
 		err := rows.Scan(
 			&meme.ID,
@@ -76,8 +74,7 @@ func (m *DBModel) Get(id int)(*User, error){
 			&meme.CreatedAt,
 			&meme.UpdatedAt,
 		)
-
-		if err != nil{
+		if err != nil {
 			fmt.Println(err)
 			return nil, err
 		}
@@ -86,77 +83,66 @@ func (m *DBModel) Get(id int)(*User, error){
 	}
 
 	user.Memes = memes
-	
-	return &user, nil	
+
+	return &user, nil
 }
 
-func (m *DBModel) Scraping()(*ScrapingResult, error){
+func (m *DBModel) Scraping() (*ScrapingResult, error) {
 	sr := ScrapingResult{}
 	geziyor.NewGeziyor(&geziyor.Options{
 		// scraping resourse url
-    StartURLs: []string{"https://knowyourmeme.com/random"},
+		StartURLs: []string{"https://knowyourmeme.com/random"},
 
 		// parse function
 		ParseFunc: func(g *geziyor.Geziyor, r *client.Response) {
-				// scrape `title`
-				r.HTMLDoc.Find("header > section").Each(func(_ int, s *goquery.Selection){
-					parsedTitle := s.Find("article.entry header section.info h1").Text()
-					sr.MemeTitle = strings.Replace(parsedTitle, "\n", "", -1)
-				})
+			// scrape `title`
+			r.HTMLDoc.Find("header > section").Each(func(_ int, s *goquery.Selection) {
+				parsedTitle := s.Find("article.entry header section.info h1").Text()
+				sr.MemeTitle = strings.Replace(parsedTitle, "\n", "", -1)
+			})
 
-				// scrape `image`
-				r.HTMLDoc.Find(".photo-wrapper").Each(func(_ int, s *goquery.Selection){
-					im, _ := s.Find("a > img").Attr("data-src")
+			// scrape `image`
+			r.HTMLDoc.Find(".photo-wrapper").Each(func(_ int, s *goquery.Selection) {
+				im, _ := s.Find("a > img").Attr("data-src")
 
-					sr.Image = im
-				})
+				sr.Image = im
+			})
 
-				// scrape `about`, `origin`, `spread`, if any
-				r.HTMLDoc.Find(".entry-section").Each(func(i int, s *goquery.Selection){
+			// scrape `about`, `origin`, `spread`, if any
+			r.HTMLDoc.Find(".entry-section").Each(func(i int, s *goquery.Selection) {
+				// `about`
+				if i == 0 {
+					sr.About = s.Find("h2").Text()
+					sr.AboutText = s.Find(".bodycopy p").Text()
+				}
 
-					// `about`
-					if i == 0 {
-						sr.About = s.Find("h2").Text()
-						sr.AboutText = s.Find(".bodycopy p").Text()
-					}
+				// `origin`
+				if i == 1 {
+					sr.Origin = s.Find("h2").Text()
+					sr.OriginText = s.Find(".bodycopy p").Text()
+				}
 
-					// `origin`
-					if i == 1{
-						sr.Origin = s.Find("h2").Text()
-						sr.OriginText = s.Find(".bodycopy p").Text()
-					}
+				// `spread`
+				if i == 2 {
+					sr.Spread = s.Find("h2").Text()
+					sr.SpreadText = s.Find(".bodycopy p").Text()
+				}
+			})
+		},
+	}).Start()
 
-					// `spread`
-					if i == 2{
-						sr.Spread = s.Find("h2").Text()
-						sr.SpreadText = s.Find(".bodycopy p").Text()
-					}
-				})
-    },
-}).Start()
+	var scrapedMeme ScrapingResult
 
-// fmt.Println("meme title...",sr.MemeTitle)
-// fmt.Println("image...",sr.Image)
-// fmt.Println("about...",sr.About)
-// fmt.Println("about text...",sr.AboutText)
-// fmt.Println("origin...",sr.Origin)
-// fmt.Println("origin text...",sr.OriginText)
-// fmt.Println("spread text...",sr.Spread)
-// fmt.Println("spread text...",sr.SpreadText)
+	scrapedMeme.MemeTitle = sr.MemeTitle
+	scrapedMeme.Image = sr.Image
+	scrapedMeme.About = sr.About
+	scrapedMeme.AboutText = sr.AboutText
+	scrapedMeme.Origin = sr.Origin
+	scrapedMeme.OriginText = sr.OriginText
+	scrapedMeme.Spread = sr.Spread
+	scrapedMeme.SpreadText = sr.SpreadText
 
-var scrapedMeme ScrapingResult
-
-scrapedMeme.MemeTitle = sr.MemeTitle
-scrapedMeme.Image = sr.Image
-scrapedMeme.About = sr.About
-scrapedMeme.AboutText = sr.AboutText
-scrapedMeme.Origin = sr.Origin
-scrapedMeme.OriginText = sr.OriginText
-scrapedMeme.Spread = sr.Spread
-scrapedMeme.SpreadText = sr.SpreadText
-
-fmt.Println(scrapedMeme)
-
+	fmt.Println(scrapedMeme)
 
 	return &scrapedMeme, nil
 }
