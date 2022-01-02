@@ -29,7 +29,7 @@ func (m *DBModel) Get(id int) (*User, error) {
 
 	err := row.Scan(
 		&user.ID,
-		&user.Name,
+		&user.UserName,
 		&user.Password,
 	)
 	if err != nil {
