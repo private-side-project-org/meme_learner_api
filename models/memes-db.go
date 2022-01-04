@@ -21,7 +21,7 @@ func (m *DBModel) Get(id int) (*User, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancel()
 
-	query := `SELECT id, name, password from users where id = $1`
+	query := `SELECT id, username, password from users where id = $1`
 
 	row := m.DB.QueryRowContext(ctx, query, id)
 
@@ -145,4 +145,35 @@ func (m *DBModel) Scraping() (*ScrapingResult, error) {
 	fmt.Println(scrapedMeme)
 
 	return &scrapedMeme, nil
+}
+
+func (m *DBModel) CreateUser(uc *UserCredentials) *UserCredentials {
+	query := `INSERT INTO users(username, password, created_at, updated_at) 
+						VALUES ($1, $2, $3, $4)`
+
+	fmt.Printf("is it %v", uc.UserName)
+	fmt.Printf("is it %v", uc.Password)
+
+	_, err := m.DB.Exec(query, &uc.UserName, &uc.Password, time.Now(), time.Now())
+
+	if err != nil {
+		fmt.Println(err)
+	}
+
+	return uc
+}
+
+func (m *DBModel) GetUser(un string) *UserCredentials {
+	query := `SELECT username, password FROM users WHERE username = $1`
+
+	row := m.DB.QueryRow(query, un)
+
+	var uc UserCredentials
+
+	row.Scan(
+		&uc.UserName,
+		&uc.Password,
+	)
+
+	return &uc
 }

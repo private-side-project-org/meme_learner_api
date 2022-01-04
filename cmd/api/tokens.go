@@ -21,7 +21,7 @@ var validUser = models.User{
 
 // request body receiver
 type Credentials struct {
-	UserName string `json:"id"`
+	UserName string `json:"username"`
 	Password string `json:"password"`
 }
 
@@ -35,8 +35,10 @@ func (app *application) Signin(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// password from DB(temporary used placeholder user struct)
-	hashedPassword := validUser.Password
+	// get user to get hashed password
+	uc := app.models.DB.GetUser(creds.UserName)
+
+	hashedPassword := uc.Password
 
 	// password from client
 	clientPassword := creds.Password
@@ -50,6 +52,7 @@ func (app *application) Signin(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Claims constitute the payload part of a JSON web token and represent a set of information exchanged between two parties.
 	var claims jwt.Claims
 	claims.Subject = fmt.Sprint(validUser.ID)
 	claims.Issued = jwt.NewNumericTime(time.Now())
@@ -65,5 +68,5 @@ func (app *application) Signin(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = app.writeJSON(w, http.StatusOK, jwtBytes, "response")
+	app.writeJSON(w, http.StatusOK, string(jwtBytes), "response")
 }

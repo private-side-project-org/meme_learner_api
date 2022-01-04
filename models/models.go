@@ -46,3 +46,8 @@ type ScrapingResult struct {
 	Spread     string `json:"spread"`
 	SpreadText string `json:"spread_text"`
 }
+
+type UserCredentials struct {
+	UserName string `json:"username"`
+	Password string `json:"password"`
+}
