@@ -31,12 +31,19 @@ func (app *application) Signin(w http.ResponseWriter, r *http.Request) {
 	err := json.NewDecoder(r.Body).Decode(&creds)
 
 	if err != nil {
-		app.errorJson(w, errors.New("Unauthorized"))
+		app.errorJson(w, errors.New("unauthorized - error decoding"))
 		return
 	}
 
 	// get user to get hashed password
 	uc := app.models.DB.GetUser(creds.UserName)
+
+	// error handling when not match any user
+	if (models.UserCredentials{}) == *uc {
+		fmt.Println("error no match user")
+		app.errorJson(w, errors.New("unauthorized - no matched user"))
+		return
+	}
 
 	hashedPassword := uc.Password
 
@@ -45,10 +52,9 @@ func (app *application) Signin(w http.ResponseWriter, r *http.Request) {
 
 	err = bcrypt.CompareHashAndPassword([]byte(hashedPassword), []byte(clientPassword))
 
+	// error handling wrong password
 	if err != nil {
-		fmt.Println("error when crypting")
-		fmt.Printf("why crypting %v", &creds)
-		app.errorJson(w, errors.New("Unauthorized"))
+		app.errorJson(w, errors.New("unauthorized - invalid password"))
 		return
 	}
 
