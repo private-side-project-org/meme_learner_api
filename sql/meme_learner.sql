@@ -6,26 +6,12 @@ Drop SEQUENCE public.users_id_seq;
 --
 
 CREATE TABLE public.users (
-    id integer NOT NULL PRIMARY KEY,
-    name text NOT NULL,
+    id SERIAL NOT NULL PRIMARY KEY,
+    username text NOT NULL,
     password text NOT NULL, 
     created_at timestamp without time zone,
     updated_at timestamp without time zone
 );
-
-
---
--- Name: users_id_seq; Type: SEQUENCE; Schema: public; Owner: -
---
-
-CREATE SEQUENCE public.users_id_seq
-    AS integer
-    START WITH 1
-    INCREMENT BY 1
-    NO MINVALUE
-    NO MAXVALUE
-    CACHE 1;
-
 
 --
 -- Name: memes; Type: TABLE; Schema: public; Owner: -
