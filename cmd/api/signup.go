@@ -29,8 +29,6 @@ func (app *application) SignUp(w http.ResponseWriter, r *http.Request) {
 
 	uc.Password = string(hashedPassword)
 
-	fmt.Printf("what is %v", &uc)
-
 	uCreds := app.models.DB.CreateUser(&uc)
 
 	app.writeJSON(w, http.StatusOK, uCreds, "sign up")
