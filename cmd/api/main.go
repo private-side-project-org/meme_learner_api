@@ -11,6 +11,7 @@ import (
 	"os"
 	"time"
 
+	"github.com/joho/godotenv"
 	_ "github.com/lib/pq"
 )
 
@@ -39,13 +40,27 @@ type application struct {
 	models models.Models
 }
 
+// use godot package to load/read the .env file and
+// return the value of the key
+func goDotEnvVariable(key string) string {
+
+	// load .env file
+	err := godotenv.Load(".env")
+
+	if err != nil {
+		log.Fatalf("Error loading .env file")
+	}
+
+	return os.Getenv(key)
+}
+
 func main() {
 	var cfg config
 
 	flag.IntVar(&cfg.port, "port", 8090, "Server port to listen on")
 	flag.StringVar(&cfg.env, "env", "development", "Application environment (development|production)")
-	flag.StringVar(&cfg.db.dsn, "dsn", "postgres://gonakano001@localhost/meme_learner?sslmode=disable", "Postgres connection string")
-	flag.StringVar(&cfg.jwt.secret, "jwt-secret", "2dce505d96a53c5768052ee90f3df2055657518dad489160df9913f66042e160", "secret")
+	flag.StringVar(&cfg.db.dsn, "dsn", goDotEnvVariable("POSTGRES"), "Postgres connection string")
+	flag.StringVar(&cfg.jwt.secret, "jwt-secret", goDotEnvVariable("JWT_SECRET"), "secret")
 
 	flag.Parse()
 
